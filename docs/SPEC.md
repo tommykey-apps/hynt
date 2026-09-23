@@ -8,7 +8,7 @@
 
 ## 前提
 
-Linux のみ。読み取りだけなので root 不要。iproute2 (`ip`) が入っていること。
+Linux のみ。iproute2 (`ip`) が入っていること。読み取りだけなので root 不要。例外は `ip xfrm policy` で、これだけ CAP_NET_ADMIN が要る。権限が無ければその表だけ「権限なし」と出し、他は出す。
 
 ## やらないこと
 
@@ -29,7 +29,7 @@ hynt --mermaid  # 図 (graph LR)         (#4)
 - インタフェース一覧 (名前 / 種別 / 実装 / 状態 / アドレス)                    (#1)
 - 経路。全ルーティングテーブルと `ip rule` を読み、宛先ごとにインタフェースを付ける (#2)
 - 隣人 (`ip neigh`) の件数と一覧                                              (#3)
-- インタフェースを持たない IPsec (`ip xfrm policy`)                            (#3)
+- インタフェースを持たない IPsec (`ip xfrm policy`、root のときだけ)              (#3)
 - JSON / Mermaid 出力                                                        (#4)
 - GitHub Releases / `go install` / AUR で配布                                 (#5)
 
