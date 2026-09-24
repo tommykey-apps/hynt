@@ -1,8 +1,8 @@
 # hynt
 
-ホストがどのネットワークに繋がっているかを、**VPN を含めて** 1 つの表に出す CLI。
+ホストがどのネットワークに繋がっているかを、**VPN を含めて** 1 つの表に出す CLI。同じ収集処理を Go のライブラリとしても公開する。
 
-主眼は「この宛先はどのインタフェースへ流れるか」。図は別のリポジトリで作り、hynt は `--json` を渡すだけにする。
+主眼は「この宛先はどのインタフェースへ流れるか」。図は別のリポジトリ (図のツール) で作る。図のツールは hynt を import して `hynt.Collect` を呼ぶ。
 
 名前はウェールズ語 hynt (進路、道筋)。
 
@@ -19,9 +19,10 @@ Linux のみ。iproute2 (`ip`) が入っていること。読み取りだけな�
 ```
 hynt            # 表
 hynt --json     # 機械向け              (#4)
+hynt --version  #                       (#5)
 ```
 
-開発時は `go run .`。
+開発時は `go run ./cmd/hynt`。
 
 ## 機能
 
@@ -29,7 +30,7 @@ hynt --json     # 機械向け              (#4)
 - 経路。全ルーティングテーブルと `ip rule` を読み、宛先ごとにインタフェースを付ける (#2)
 - 隣人 (`ip neigh`) の件数と一覧                                              (#3)
 - インタフェースを持たない IPsec (`ip xfrm policy`、root のときだけ)              (#3)
-- JSON 出力 (図のツールへの受け渡し形式)                                     (#4)
+- `hynt.Collect` の公開と JSON 出力                                           (#4)
 - GitHub Releases / `go install` で配布                                       (#5)
 
 ## 種別判定の規則
@@ -83,9 +84,22 @@ main テーブルだけ読むと Tailscale、wg-quick、Mullvad、WARP の経路
 - 1 行目の空欄は `-`、続きの行の空欄は空白
 - 列は固定幅 (`text/tabwriter`)。日本語を入れない (全角幅を数えないので列がずれる)
 
+## ライブラリとしての使い方
+
+```go
+import "github.com/tommykey-apps/hynt"
+
+r, err := hynt.Collect(ctx) // r.Links / r.Routes / r.Rules / r.Neighs / r.Policies
+```
+
+- 公開するのはリポジトリ直下の `hynt` と `link` `route` `neigh` `xfrm`。図のツールとの約束はこれらの型と関数
+- 表示の都合 (空欄を `-` にする、列の並び) は公開パッケージに持ち込まない。CLI 専用の `internal/render` でやる
+- `Collect` は root でなくても失敗しない。IPsec だけ読めなければ `IPsecDenied` を true にする
+- 公開の型や関数を削ったり意味を変えたりするときは、図のツールが追随するまで古いものを残す
+
 ## JSON の形式
 
-- 図のツールとの受け渡し形式。`hynt --json | 図のツール` で使う
+- `hynt.Report` をそのまま出したもの。Go 以外の道具が読む用
 - 先頭に `schema` (整数)。項目を削ったり意味を変えたりしたときだけ上げる。足すだけなら上げない
 - 読む側は知らない項目を無視する
 - 空の一覧は `null` でなく `[]`
@@ -94,6 +108,7 @@ main テーブルだけ読むと Tailscale、wg-quick、Mullvad、WARP の経路
 ## 技術方針
 
 - 標準ライブラリのみ。外部モジュールを追加しない
+- CLI は `cmd/hynt`。リポジトリ直下はライブラリ (`package hynt`) にする
 - netlink を自前で呼ばない。`ip -j` の JSON を `encoding/json` で読む
 - `/sys/class/net` は補助情報 (`tun_flags` / `wireless` / `device`) にだけ使う
 - 外部コマンドと sysfs の読み取りは interface で差し替え、テストは記録済みの JSON で回す
@@ -101,5 +116,6 @@ main テーブルだけ読むと Tailscale、wg-quick、Mullvad、WARP の経路
 
 ## 配布
 
-GitHub Releases (GoReleaser、linux amd64 / arm64)。副で `go install github.com/tommykey-apps/hynt@latest`。AUR には出さない。
+CLI は GitHub Releases (GoReleaser、linux amd64 / arm64)。副で `go install github.com/tommykey-apps/hynt/cmd/hynt@latest`。AUR には出さない。
+ライブラリは Go のモジュールとして、図のツールが `go get github.com/tommykey-apps/hynt` で取り込む。Releases のタグがそのまま版になる。
 Docker では配らない。ホストのインタフェースを読む道具なので、コンテナに入れると見たいものが見えない。
