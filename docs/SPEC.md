@@ -31,7 +31,7 @@ hynt --mermaid  # 図 (graph LR)         (#4)
 - 隣人 (`ip neigh`) の件数と一覧                                              (#3)
 - インタフェースを持たない IPsec (`ip xfrm policy`、root のときだけ)              (#3)
 - JSON / Mermaid 出力                                                        (#4)
-- GitHub Releases / `go install` / AUR で配布                                 (#5)
+- GitHub Releases / `go install` で配布                                       (#5)
 
 ## 種別判定の規則
 
@@ -105,5 +105,5 @@ main テーブルだけ読むと Tailscale、wg-quick、Mullvad、WARP の経路
 
 ## 配布
 
-GitHub Releases (GoReleaser、linux amd64 / arm64)。副で `go install github.com/tommykey-apps/hynt@latest` と AUR `hynt-bin`。
+GitHub Releases (GoReleaser、linux amd64 / arm64)。副で `go install github.com/tommykey-apps/hynt@latest`。AUR には出さない。
 Docker では配らない。ホストのインタフェースを読む道具なので、コンテナに入れると見たいものが見えない。
