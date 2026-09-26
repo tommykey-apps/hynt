@@ -61,11 +61,11 @@ func (realSysFs) device(name string) bool {
 }
 
 type ipAddr struct {
-	Iframe    string   `json:"iframe"`
+	Ifname    string   `json:"ifname"`
 	Operstate string   `json:"operstate"`
 	Flags     []string `json:"flags"`
 	Linkinfo  struct {
-		Kind string `json:"kind"`
+		Kind string `json:"info_kind"`
 	} `json:"linkinfo"`
 	AddrInfo []struct {
 		Local     string `json:"local"`
@@ -92,8 +92,8 @@ func parse(raw []byte, fs sysfs) ([]Link, error) {
 		if slices.Contains(it.Flags, "LOOPBACK") {
 			continue
 		}
-		l := Link{Name: it.Iframe, State: it.Operstate}
-		l.Kind, l.Impl = classify(it.Iframe, it.Linkinfo.Kind, fs)
+		l := Link{Name: it.Ifname, State: it.Operstate}
+		l.Kind, l.Impl = classify(it.Ifname, it.Linkinfo.Kind, fs)
 		for _, a := range it.AddrInfo {
 			if a.Scope != "global" {
 				continue
