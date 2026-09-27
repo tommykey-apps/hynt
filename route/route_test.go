@@ -41,10 +41,13 @@ const rulesSample = `[
  {"priority":32766,"src":"all","table":"main"},
  {"priority":0,"src":"all","table":"local"},
  {"priority":5250,"src":"all","fwmark":"0x80000","fwmask":"0xff0000","action":"unreachable"},
- {"priority":5270,"src":"all","table":"52"}
+ {"priority":5270,"src":"all","table":"52"},
+ {"priority":32765,"not":null,"src":"all","fwmark":"0x1","table":"100"},
+ {"priority":32764,"src":"all","table":"main","suppress_prefixlen":0}
 ]`
 
 func TestParseRules(t *testing.T) {
+	zero := 0
 	got, err := parseRules([]byte(rulesSample))
 	if err != nil {
 		t.Fatal(err)
@@ -53,6 +56,8 @@ func TestParseRules(t *testing.T) {
 		{Priority: 0, Selector: "from all", Table: "local"},
 		{Priority: 5250, Selector: "from all fwmark 0x80000/0xff0000", Action: "unreachable"},
 		{Priority: 5270, Selector: "from all", Table: "52"},
+		{Priority: 32764, Selector: "from all", Table: "main", SuppressPrefixlen: &zero},
+		{Priority: 32765, Selector: "not from all fwmark 0x1", Table: "100"},
 		{Priority: 32766, Selector: "from all", Table: "main"},
 	}
 	if !reflect.DeepEqual(got, want) {

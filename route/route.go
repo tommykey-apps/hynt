@@ -20,9 +20,12 @@ type Route struct {
 
 type Rule struct {
 	Priority int    `json:"priority"`
-	Selector string `json:"selector"` // "from all" / "from all fwmark 0x80000/0xff0000" など
+	Selector string `json:"selector"` // "from all" / "from all fwmark 0x80000/0xff0000" / "not from all fwmark 0xca6c" など
 	Table    string `json:"table"`    // action が unreachable などのときは空
 	Action   string `json:"action"`
+	// SuppressPrefixlen は suppress_prefixlength。この長さ以下の経路を無視する。
+	// wg-quick は 0 を付けて main の default を無視させる。付いていなければ nil
+	SuppressPrefixlen *int `json:"suppress_prefixlength,omitempty"`
 }
 
 // ip -j route show table all の1件。必要な項目だけ持つ
@@ -43,6 +46,9 @@ type ipRule struct {
 	Fwmask   string `json:"fwmask"`
 	Table    string `json:"table"`
 	Action   string `json:"action"`
+	// "not" は値が null で、有無だけが意味を持つ。*T だと null で nil になり区別できないので RawMessage で受ける
+	Not               json.RawMessage `json:"not"`
+	SuppressPrefixlen *int            `json:"suppress_prefixlen"`
 }
 
 func List(ctx context.Context) ([]Route, error) {
@@ -114,6 +120,9 @@ func parseRules(raw []byte) ([]Rule, error) {
 	rules := make([]Rule, 0, len(items))
 	for _, it := range items {
 		sel := "from " + it.Src
+		if len(it.Not) > 0 {
+			sel = "not " + sel
+		}
 		if it.Dst != "" {
 			sel += " to " + it.Dst
 		}
@@ -123,7 +132,7 @@ func parseRules(raw []byte) ([]Rule, error) {
 				sel += "/" + it.Fwmask
 			}
 		}
-		rules = append(rules, Rule{Priority: it.Priority, Selector: sel, Table: it.Table, Action: it.Action})
+		rules = append(rules, Rule{Priority: it.Priority, Selector: sel, Table: it.Table, Action: it.Action, SuppressPrefixlen: it.SuppressPrefixlen})
 	}
 	slices.SortFunc(rules, func(a, b Rule) int { return a.Priority - b.Priority })
 	return rules, nil
