@@ -20,6 +20,6 @@ Go が入っていれば:
 
     go install github.com/tommykey-apps/hynt/cmd/hynt@latest
 
-`ip xfrm policy` (IPsec の行) だけ root が要る。それ以外は一般ユーザーで動く。
+`ip xfrm policy` (IPsec の行) と `nft list ruleset` (`--json` のファイアウォール) だけ root が要る。それ以外は一般ユーザーで動く。
 
 仕様は `docs/SPEC.md`。
