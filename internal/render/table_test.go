@@ -31,12 +31,12 @@ func TestTable(t *testing.T) {
 	if err := Table(&b, r); err != nil {
 		t.Fatal(err)
 	}
-	want := `IF          KIND      STATE    NEIGH  ADDR               DST             VIA          TABLE
-eno1        ethernet  DOWN     0      -                  -               -            -
-tailscale0  vpn tun   UNKNOWN  0      100.64.0.1/32  100.64.0.2   -            52
-wlp2s0      wifi      UP       1      192.0.2.132/24   default         192.0.2.1  main
-                                      2001:db8::10/64    192.0.2.0/24  -            main
-(ipsec)     ipsec     DENIED   -      -                  -               -            -
+	want := `IF          KIND      STATE    NEIGH  ADDR             DST           VIA        TABLE
+eno1        ethernet  DOWN     0      -                -             -          -
+tailscale0  vpn tun   UNKNOWN  0      100.64.0.1/32    100.64.0.2    -          52
+wlp2s0      wifi      UP       1      192.0.2.132/24   default       192.0.2.1  main
+                                      2001:db8::10/64  192.0.2.0/24  -          main
+(ipsec)     ipsec     DENIED   -      -                -             -          -
 `
 	if b.String() != want {
 		t.Errorf("got:\n%s\nwant:\n%s", b.String(), want)
