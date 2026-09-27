@@ -1,0 +1,499 @@
+{
+    "nftables": [
+        {
+            "table": {
+                "family": "inet",
+                "name": "filter"
+            }
+        },
+        {
+            "chain": {
+                "family": "inet",
+                "table": "filter",
+                "name": "input",
+                "type": "filter",
+                "hook": "input",
+                "prio": 0,
+                "policy": "drop"
+            }
+        },
+        {
+            "chain": {
+                "family": "inet",
+                "table": "filter",
+                "name": "extra"
+            }
+        },
+        {
+            "set": {
+                "family": "inet",
+                "name": "allowed",
+                "table": "filter",
+                "type": "inet_service",
+                "elem": [
+                    80,
+                    443
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "input",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "ct": {
+                                    "key": "state"
+                                }
+                            },
+                            "right": {
+                                "set": [
+                                    "established",
+                                    "related"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "accept": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "input",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "in",
+                            "left": {
+                                "ct": {
+                                    "key": "state"
+                                }
+                            },
+                            "right": "invalid"
+                        }
+                    },
+                    {
+                        "drop": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "input",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "meta": {
+                                    "key": "iif"
+                                }
+                            },
+                            "right": "lo"
+                        }
+                    },
+                    {
+                        "accept": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "input",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "ip",
+                                    "field": "protocol"
+                                }
+                            },
+                            "right": "icmp"
+                        }
+                    },
+                    {
+                        "accept": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "input",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "tcp",
+                                    "field": "dport"
+                                }
+                            },
+                            "right": 22
+                        }
+                    },
+                    {
+                        "accept": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "input",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "meta": {
+                                    "key": "iifname"
+                                }
+                            },
+                            "right": "eth0"
+                        }
+                    },
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "tcp",
+                                    "field": "dport"
+                                }
+                            },
+                            "right": "@allowed"
+                        }
+                    },
+                    {
+                        "accept": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "input",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "meta": {
+                                    "key": "iifname"
+                                }
+                            },
+                            "right": "tun0"
+                        }
+                    },
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "udp",
+                                    "field": "dport"
+                                }
+                            },
+                            "right": {
+                                "set": [
+                                    5353,
+                                    41641
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "accept": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "input",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "tcp",
+                                    "field": "dport"
+                                }
+                            },
+                            "right": {
+                                "range": [
+                                    8000,
+                                    8100
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "accept": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "input",
+                "expr": [
+                    {
+                        "jump": {
+                            "target": "extra"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "input",
+                "expr": [
+                    {
+                        "reject": {
+                            "type": "icmpx",
+                            "expr": "port-unreachable"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "extra",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "ip",
+                                    "field": "saddr"
+                                }
+                            },
+                            "right": {
+                                "prefix": {
+                                    "addr": "192.0.2.0",
+                                    "len": 24
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "tcp",
+                                    "field": "dport"
+                                }
+                            },
+                            "right": 9000
+                        }
+                    },
+                    {
+                        "accept": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "filter",
+                "chain": "extra",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "meta": {
+                                    "key": "iifname"
+                                }
+                            },
+                            "right": "eth0"
+                        }
+                    },
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "tcp",
+                                    "field": "dport"
+                                }
+                            },
+                            "right": 631
+                        }
+                    },
+                    {
+                        "drop": null
+                    }
+                ]
+            }
+        },
+        {
+            "table": {
+                "family": "inet",
+                "name": "other"
+            }
+        },
+        {
+            "chain": {
+                "family": "inet",
+                "table": "other",
+                "name": "out",
+                "type": "filter",
+                "hook": "output",
+                "prio": 0,
+                "policy": "accept"
+            }
+        },
+        {
+            "chain": {
+                "family": "inet",
+                "table": "other",
+                "name": "early",
+                "type": "filter",
+                "hook": "input",
+                "prio": -10,
+                "policy": "accept"
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "other",
+                "chain": "out",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "tcp",
+                                    "field": "dport"
+                                }
+                            },
+                            "right": 25
+                        }
+                    },
+                    {
+                        "drop": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "other",
+                "chain": "early",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "meta": {
+                                    "key": "pkttype"
+                                }
+                            },
+                            "right": "host"
+                        }
+                    },
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "tcp",
+                                    "field": "dport"
+                                }
+                            },
+                            "right": 22
+                        }
+                    },
+                    {
+                        "counter": {
+                            "packets": 0,
+                            "bytes": 0
+                        }
+                    },
+                    {
+                        "accept": null
+                    }
+                ]
+            }
+        },
+        {
+            "rule": {
+                "family": "inet",
+                "table": "other",
+                "chain": "early",
+                "expr": [
+                    {
+                        "match": {
+                            "op": "!=",
+                            "left": {
+                                "meta": {
+                                    "key": "iifname"
+                                }
+                            },
+                            "right": "lo"
+                        }
+                    },
+                    {
+                        "match": {
+                            "op": "==",
+                            "left": {
+                                "payload": {
+                                    "protocol": "tcp",
+                                    "field": "dport"
+                                }
+                            },
+                            "right": 6000
+                        }
+                    },
+                    {
+                        "drop": null
+                    }
+                ]
+            }
+        }
+    ]
+}

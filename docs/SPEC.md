@@ -8,7 +8,7 @@
 
 ## 前提
 
-Linux のみ。iproute2 (`ip`) が入っていること。読み取りだけなので root 不要。例外は `ip xfrm policy` で、これだけ CAP_NET_ADMIN が要る。権限が無ければその表だけ「権限なし」と出し、他は出す。
+Linux のみ。iproute2 (`ip` `ss`) が入っていること。読み取りだけなので root 不要。例外は `ip xfrm policy` と `nft list ruleset` で、この 2 つだけ CAP_NET_ADMIN が要る。権限が無ければそこだけ「権限なし」とし、他は出す。nft が無ければファイアウォールは「nft なし」とする。
 
 ## やらないこと
 
@@ -31,6 +31,8 @@ hynt --version  #                       (#5)
 - 隣人 (`ip neigh`) の件数と一覧                                              (#3)
 - インタフェースを持たない IPsec (`ip xfrm policy`、root のときだけ)              (#3)
 - `hynt.Collect` の公開と JSON 出力                                           (#4)
+- 待ち受けているソケット (`ss -tulnp`)。外から入ってこられる口
+- ファイアウォール (`nft -j list ruleset` の input。root のときだけ)
 - GitHub Releases / `go install` で配布                                       (#5)
 
 ## 種別判定の規則
@@ -79,7 +81,7 @@ main テーブルだけ読むと Tailscale、wg-quick、Mullvad、WARP の経路
 - 表は 1 つ。分けると一覧の意味が薄れる。列は IF / KIND / STATE / NEIGH / ADDR / DST / VIA / TABLE
 - 1 インタフェース 1 グループ。アドレスや経路が複数あれば 2 行目以降は IF / KIND / STATE / NEIGH を空けて続ける
 - インタフェースを持たない IPsec は `(ipsec)` という仮の行名で末尾に並べる。root でなく読めなければ STATE を `DENIED` にする
-- rule は表に出さない。`--json` にだけ出す
+- rule、待ち受けソケット、ファイアウォールは表に出さない。`--json` にだけ出す
 - 名前でソートしてから出す。出力を決定的にするため
 - 1 行目の空欄は `-`、続きの行の空欄は空白
 - 列は固定幅 (`text/tabwriter`)。日本語を入れない (全角幅を数えないので列がずれる)
@@ -103,7 +105,19 @@ r, err := hynt.Collect(ctx) // r.Links / r.Routes / r.Rules / r.Neighs / r.Polic
 - 先頭に `schema` (整数)。項目を削ったり意味を変えたりしたときだけ上げる。足すだけなら上げない
 - 読む側は知らない項目を無視する
 - 空の一覧は `null` でなく `[]`
-- 項目: `schema` `host` `links` `routes` `rules` `neighs` `ipsec` `ipsec_denied`
+- 項目: `schema` `host` `links` `routes` `rules` `neighs` `ipsec` `ipsec_denied` `listens` `firewall` `firewall_state`
+- `firewall_state` は `read` (読めた。規則 0 件なら塞ぐものは無い) / `denied` (root でない) / `missing` (nft が無い)
+
+## ファイアウォールの単純化
+
+図のツールが「この口のこのポートに外から入れるか」を判定できる形にする。判定そのものは図のツールがやる。
+
+- 対象は family が inet / ip / ip6 で、type filter・hook input の基本のチェーンを持つ表。その表の jump 先の通常のチェーンも読む。output や forward は読まない
+- 規則は「受信口 (`iifname` / `iif`)・プロトコル (`meta l4proto` / `ip protocol` / `ip6 nexthdr` / `tcp dport` の tcp)・宛先ポート・`ct state` → 結果」に直す。名前付きの集合 (`@name`) と範囲は開く
+- `meta pkttype host` は条件にしない。外から繋ぎに来る通信は自分宛て (host) なので
+- counter / log / limit / comment / quota は結果に関わらないので読み飛ばす。limit は超えた分を次の規則へ流すが、当たる扱いにする
+- それ以外の条件 (送信元アドレス、`!=` など) は `unknown` に文字列で残す。vmap と xt (iptables-nft) は結果も `unknown` にする
+- iptables-legacy の規則は nft に出ないので読めない
 
 ## 技術方針
 

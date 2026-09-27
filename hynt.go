@@ -9,7 +9,9 @@ import (
 	"errors"
 	"os"
 
+	"github.com/tommykey-apps/hynt/firewall"
 	"github.com/tommykey-apps/hynt/link"
+	"github.com/tommykey-apps/hynt/listen"
 	"github.com/tommykey-apps/hynt/neigh"
 	"github.com/tommykey-apps/hynt/route"
 	"github.com/tommykey-apps/hynt/xfrm"
@@ -29,10 +31,23 @@ type Report struct {
 	Policies []xfrm.Policy `json:"ipsec"`
 	// IPsecDenied は ip xfrm policy が権限不足で読めなかったとき true。Policies は空
 	IPsecDenied bool `json:"ipsec_denied"`
+	// Listens は待ち受けているソケット。外から入ってこられる口
+	Listens []listen.Socket `json:"listens"`
+	// Firewall は nftables の input の規則。FirewallState が FirewallRead のときだけ中身がある
+	Firewall      []firewall.Chain `json:"firewall"`
+	FirewallState string           `json:"firewall_state"`
 }
 
-// Collect は ip コマンドと /sys/class/net を読んで Report を返す。root は要らない。
-// root でなければ IPsec だけ読めず、IPsecDenied が true になる (エラーにはしない)
+// FirewallState の値
+const (
+	FirewallRead    = "read"    // 読めた。規則が 0 件なら、塞いでいるものは無い
+	FirewallDenied  = "denied"  // root でなく読めなかった
+	FirewallMissing = "missing" // nft が入っていない
+)
+
+// Collect は ip / ss / nft コマンドと /sys/class/net を読んで Report を返す。root は要らない。
+// root でなければ IPsec とファイアウォールが読めず、IPsecDenied が true、
+// FirewallState が FirewallDenied になる (エラーにはしない)
 func Collect(ctx context.Context) (Report, error) {
 	r := Report{Schema: Schema}
 	var err error
@@ -54,5 +69,22 @@ func Collect(ctx context.Context) (Report, error) {
 		r.IPsecDenied = true
 		err = nil
 	}
-	return r, err
+	if err != nil {
+		return r, err
+	}
+	if r.Listens, err = listen.List(ctx); err != nil {
+		return r, err
+	}
+	r.Firewall, err = firewall.List(ctx)
+	switch {
+	case errors.Is(err, firewall.ErrPermission):
+		r.FirewallState = FirewallDenied
+	case errors.Is(err, firewall.ErrNotInstalled):
+		r.FirewallState = FirewallMissing
+	case err != nil:
+		return r, err
+	default:
+		r.FirewallState = FirewallRead
+	}
+	return r, nil
 }
