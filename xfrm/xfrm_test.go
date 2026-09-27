@@ -5,18 +5,18 @@ import (
 	"testing"
 )
 
-// strongSwan が入れる policy の実出力例 (in / fwd / socket を含む)
-const sample = `src 10.22.46.11/32 dst 10.233.0.0/18 
+// strongSwan が入れる policy の形 (in / fwd / socket を含む)。アドレスは文書用、spi は架空
+const sample = `src 192.0.2.11/32 dst 198.51.100.0/24 
 	dir out priority 374399 ptype main 
-	tmpl src 10.22.46.11 dst 10.22.46.34
-		proto esp spi 0xce291c8a reqid 3 mode tunnel
-src 10.233.0.0/18 dst 10.22.46.11/32 
+	tmpl src 192.0.2.11 dst 203.0.113.34
+		proto esp spi 0x00001000 reqid 3 mode tunnel
+src 198.51.100.0/24 dst 192.0.2.11/32 
 	dir fwd priority 374399 ptype main 
-	tmpl src 10.22.46.34 dst 10.22.46.11
+	tmpl src 203.0.113.34 dst 192.0.2.11
 		proto esp reqid 3 mode tunnel
-src 10.233.0.0/18 dst 10.22.46.11/32 
+src 198.51.100.0/24 dst 192.0.2.11/32 
 	dir in priority 374399 ptype main 
-	tmpl src 10.22.46.34 dst 10.22.46.11
+	tmpl src 203.0.113.34 dst 192.0.2.11
 		proto esp reqid 3 mode tunnel
 src 2001:db8:a1::/64 dst 2001:db8:a2::/64 
 	dir out priority 399999 ptype main 
@@ -34,7 +34,7 @@ func TestParse(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []Policy{
-		{Src: "10.22.46.11/32", Dst: "10.233.0.0/18", Gateway: "10.22.46.34", Mode: "tunnel"},
+		{Src: "192.0.2.11/32", Dst: "198.51.100.0/24", Gateway: "203.0.113.34", Mode: "tunnel"},
 		{Src: "2001:db8:a1::/64", Dst: "2001:db8:a2::/64", Gateway: "2001:db8:2::1", Mode: "tunnel"},
 	}
 	if !reflect.DeepEqual(got, want) {
