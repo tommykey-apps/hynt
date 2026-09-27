@@ -11,18 +11,18 @@ import (
 )
 
 type Route struct {
-	Dst     string // "default" か CIDR
-	Gateway string // 直結なら空
-	Dev     string
-	Table   string // "main" / "52" など
-	Metric  int
+	Dst     string `json:"dst"`     // "default" か CIDR
+	Gateway string `json:"gateway"` // 直結なら空
+	Dev     string `json:"dev"`
+	Table   string `json:"table"` // "main" / "52" など
+	Metric  int    `json:"metric"`
 }
 
 type Rule struct {
-	Priority int
-	Selector string // "from all" / "from all fwmark 0x80000/0xff0000" など
-	Table    string // action が unreachable などのときは空
-	Action   string
+	Priority int    `json:"priority"`
+	Selector string `json:"selector"` // "from all" / "from all fwmark 0x80000/0xff0000" など
+	Table    string `json:"table"`    // action が unreachable などのときは空
+	Action   string `json:"action"`
 }
 
 // ip -j route show table all の1件。必要な項目だけ持つ

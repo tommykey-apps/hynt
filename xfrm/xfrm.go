@@ -18,10 +18,10 @@ var ErrPermission = errors.New("ip xfrm policy は root 権限が要る")
 
 // Policy は「Dst 宛ては Gateway と IPsec で結ぶ」という 1 件
 type Policy struct {
-	Src     string // ローカル側の範囲
-	Dst     string // 相手側の範囲
-	Gateway string // tmpl dst。トンネルの向こう端
-	Mode    string // tunnel / transport
+	Src     string `json:"src"`     // ローカル側の範囲
+	Dst     string `json:"dst"`     // 相手側の範囲
+	Gateway string `json:"gateway"` // tmpl dst。トンネルの向こう端
+	Mode    string `json:"mode"`    // tunnel / transport
 }
 
 func List(ctx context.Context) ([]Policy, error) {

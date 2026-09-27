@@ -12,10 +12,10 @@ import (
 
 // Neigh は ip neigh の1件。同じ LAN 上で最近通信した相手
 type Neigh struct {
-	Dst    string // IP
-	Lladdr string // MAC
-	Dev    string
-	State  string // REACHABLE / STALE / DELAY / PROBE / PERMANENT
+	Dst    string `json:"dst"` // IP
+	Lladdr string `json:"mac"` // MAC
+	Dev    string `json:"dev"`
+	State  string `json:"state"` // REACHABLE / STALE / DELAY / PROBE / PERMANENT
 }
 
 type ipNeigh struct {

@@ -23,11 +23,11 @@ const (
 )
 
 type Link struct {
-	Name  string
-	Kind  Kind
-	Impl  string
-	State string
-	Addrs []string
+	Name  string   `json:"name"`
+	Kind  Kind     `json:"kind"`
+	Impl  string   `json:"impl"`
+	State string   `json:"state"`
+	Addrs []string `json:"addrs"`
 }
 
 type sysfs interface {
