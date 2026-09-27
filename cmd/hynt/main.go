@@ -11,9 +11,17 @@ import (
 	"github.com/tommykey-apps/hynt/internal/render"
 )
 
+// GoReleaser が -X main.version=v1.2.3 で埋める。go run のときは dev
+var version = "dev"
+
 func main() {
 	asJSON := flag.Bool("json", false, "JSON で出す")
+	showVersion := flag.Bool("version", false, "版を出す")
 	flag.Parse()
+	if *showVersion {
+		fmt.Println("hynt", version)
+		return
+	}
 
 	r, err := hynt.Collect(context.Background())
 	if err == nil {
