@@ -28,7 +28,7 @@ const sample = `[
   "linkinfo":{"info_kind":"bridge"},
   "addr_info":[{"family":"inet","local":"172.17.0.1","prefixlen":16,"scope":"global"}]},
  {"ifname":"vethf76fd7f","flags":["BROADCAST","MULTICAST","UP","LOWER_UP"],"operstate":"UP",
-  "linkinfo":{"info_kind":"veth"},"addr_info":[]},
+  "master":"docker0","linkinfo":{"info_kind":"veth"},"addr_info":[]},
  {"ifname":"eno1","flags":["NO-CARRIER","BROADCAST","MULTICAST","UP"],"operstate":"DOWN","addr_info":[]}
 ]`
 
@@ -47,7 +47,7 @@ func TestParse(t *testing.T) {
 		{Name: "docker0", Kind: Bridge, Impl: "bridge", State: "UP", Addrs: []string{"172.17.0.1/16"}},
 		{Name: "eno1", Kind: Ethernet, State: "DOWN"},
 		{Name: "tailscale0", Kind: VPN, Impl: "tun", State: "UNKNOWN", Addrs: []string{"100.64.0.1/32"}},
-		{Name: "vethf76fd7f", Kind: Virtual, Impl: "veth", State: "UP"},
+		{Name: "vethf76fd7f", Kind: Virtual, Impl: "veth", State: "UP", Master: "docker0"},
 		{Name: "wlp2s0", Kind: Wifi, State: "UP", Addrs: []string{"192.0.2.132/24"}},
 	}
 	if !reflect.DeepEqual(got, want) {

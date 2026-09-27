@@ -28,6 +28,8 @@ type Link struct {
 	Impl  string   `json:"impl"`
 	State string   `json:"state"`
 	Addrs []string `json:"addrs"`
+	// Master は所属するブリッジや bond の名前。所属していなければ空
+	Master string `json:"master"`
 }
 
 type sysfs interface {
@@ -63,6 +65,7 @@ func (realSysFs) device(name string) bool {
 type ipAddr struct {
 	Ifname    string   `json:"ifname"`
 	Operstate string   `json:"operstate"`
+	Master    string   `json:"master"`
 	Flags     []string `json:"flags"`
 	Linkinfo  struct {
 		Kind string `json:"info_kind"`
@@ -92,7 +95,7 @@ func parse(raw []byte, fs sysfs) ([]Link, error) {
 		if slices.Contains(it.Flags, "LOOPBACK") {
 			continue
 		}
-		l := Link{Name: it.Ifname, State: it.Operstate}
+		l := Link{Name: it.Ifname, State: it.Operstate, Master: it.Master}
 		l.Kind, l.Impl = classify(it.Ifname, it.Linkinfo.Kind, fs)
 		for _, a := range it.AddrInfo {
 			if a.Scope != "global" {
