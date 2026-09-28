@@ -11,7 +11,7 @@ import (
 
 func TestJSONEmptySlices(t *testing.T) {
 	var b strings.Builder
-	r := hynt.Report{Host: "box", IPsecDenied: true, Links: []link.Link{{Name: "eno1", Kind: link.Ethernet}},
+	r := hynt.Report{Host: "box", IPsecDenied: true, Links: []link.Link{{Name: "eth0", Kind: link.Ethernet}},
 		Firewall: []firewall.Chain{{Name: "input", Hook: "input", Rules: []firewall.Rule{{Verdict: "accept"}}}}}
 	if err := JSON(&b, r); err != nil {
 		t.Fatal(err)
