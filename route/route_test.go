@@ -7,16 +7,16 @@ import (
 
 // ip -j route show table all の実出力を切り詰めたもの
 const routesSample = `[
- {"dst":"100.64.0.2","dev":"tailscale0","table":"52","flags":[]},
- {"dst":"default","gateway":"192.0.2.1","dev":"wlp2s0","protocol":"dhcp","prefsrc":"192.0.2.132","metric":600,"flags":[]},
- {"dst":"192.0.2.0/24","dev":"wlp2s0","protocol":"kernel","scope":"link","prefsrc":"192.0.2.132","metric":600,"flags":[]},
+ {"dst":"100.64.0.2","dev":"tun0","table":"52","flags":[]},
+ {"dst":"default","gateway":"192.0.2.1","dev":"wlan0","protocol":"dhcp","prefsrc":"192.0.2.132","metric":600,"flags":[]},
+ {"dst":"192.0.2.0/24","dev":"wlan0","protocol":"kernel","scope":"link","prefsrc":"192.0.2.132","metric":600,"flags":[]},
  {"dst":"172.17.0.0/16","dev":"docker0","protocol":"kernel","scope":"link","prefsrc":"172.17.0.1","flags":[]},
- {"type":"local","dst":"192.0.2.132","dev":"wlp2s0","table":"local","protocol":"kernel","scope":"host","flags":[]},
- {"type":"broadcast","dst":"192.0.2.255","dev":"wlp2s0","table":"local","protocol":"kernel","scope":"link","flags":[]},
- {"dst":"fd7a:115c:a1e0::/48","dev":"tailscale0","table":"52","metric":1024,"flags":[],"pref":"medium"},
- {"dst":"fe80::/64","dev":"wlp2s0","protocol":"kernel","metric":1024,"flags":[],"pref":"medium"},
- {"dst":"default","gateway":"fe80::0:ff:fe00:1","dev":"wlp2s0","protocol":"ra","metric":600,"flags":[],"pref":"medium"},
- {"type":"multicast","dst":"ff00::/8","dev":"wlp2s0","table":"local","protocol":"kernel","metric":256,"flags":[],"pref":"medium"}
+ {"type":"local","dst":"192.0.2.132","dev":"wlan0","table":"local","protocol":"kernel","scope":"host","flags":[]},
+ {"type":"broadcast","dst":"192.0.2.255","dev":"wlan0","table":"local","protocol":"kernel","scope":"link","flags":[]},
+ {"dst":"fd7a:115c:a1e0::/48","dev":"tun0","table":"52","metric":1024,"flags":[],"pref":"medium"},
+ {"dst":"fe80::/64","dev":"wlan0","protocol":"kernel","metric":1024,"flags":[],"pref":"medium"},
+ {"dst":"default","gateway":"fe80::0:ff:fe00:1","dev":"wlan0","protocol":"ra","metric":600,"flags":[],"pref":"medium"},
+ {"type":"multicast","dst":"ff00::/8","dev":"wlan0","table":"local","protocol":"kernel","metric":256,"flags":[],"pref":"medium"}
 ]`
 
 func TestParseRoutes(t *testing.T) {
@@ -26,11 +26,11 @@ func TestParseRoutes(t *testing.T) {
 	}
 	want := []Route{
 		{Dst: "172.17.0.0/16", Dev: "docker0", Table: "main"},
-		{Dst: "100.64.0.2", Dev: "tailscale0", Table: "52"},
-		{Dst: "fd7a:115c:a1e0::/48", Dev: "tailscale0", Table: "52", Metric: 1024},
-		{Dst: "default", Gateway: "192.0.2.1", Dev: "wlp2s0", Table: "main", Metric: 600},
-		{Dst: "default", Gateway: "fe80::0:ff:fe00:1", Dev: "wlp2s0", Table: "main", Metric: 600},
-		{Dst: "192.0.2.0/24", Dev: "wlp2s0", Table: "main", Metric: 600},
+		{Dst: "100.64.0.2", Dev: "tun0", Table: "52"},
+		{Dst: "fd7a:115c:a1e0::/48", Dev: "tun0", Table: "52", Metric: 1024},
+		{Dst: "default", Gateway: "192.0.2.1", Dev: "wlan0", Table: "main", Metric: 600},
+		{Dst: "default", Gateway: "fe80::0:ff:fe00:1", Dev: "wlan0", Table: "main", Metric: 600},
+		{Dst: "192.0.2.0/24", Dev: "wlan0", Table: "main", Metric: 600},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got  %+v\nwant %+v", got, want)

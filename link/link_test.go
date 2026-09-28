@@ -18,25 +18,25 @@ func (f fakeSysfs) device(n string) bool          { return f.devs[n] }
 const sample = `[
  {"ifname":"lo","flags":["LOOPBACK","UP","LOWER_UP"],"operstate":"UNKNOWN",
   "addr_info":[{"family":"inet","local":"127.0.0.1","prefixlen":8,"scope":"host"}]},
- {"ifname":"wlp2s0","flags":["BROADCAST","MULTICAST","UP","LOWER_UP"],"operstate":"UP",
+ {"ifname":"wlan0","flags":["BROADCAST","MULTICAST","UP","LOWER_UP"],"operstate":"UP",
   "addr_info":[{"family":"inet","local":"192.0.2.132","prefixlen":24,"scope":"global"},
                {"family":"inet6","local":"fe80::2","prefixlen":64,"scope":"link"}]},
- {"ifname":"tailscale0","flags":["POINTOPOINT","MULTICAST","NOARP","UP","LOWER_UP"],"operstate":"UNKNOWN",
+ {"ifname":"tun0","flags":["POINTOPOINT","MULTICAST","NOARP","UP","LOWER_UP"],"operstate":"UNKNOWN",
   "linkinfo":{"info_kind":"tun","info_data":{"type":"tun"}},
   "addr_info":[{"family":"inet","local":"100.64.0.1","prefixlen":32,"scope":"global"}]},
  {"ifname":"docker0","flags":["BROADCAST","MULTICAST","UP","LOWER_UP"],"operstate":"UP",
   "linkinfo":{"info_kind":"bridge"},
   "addr_info":[{"family":"inet","local":"172.17.0.1","prefixlen":16,"scope":"global"}]},
- {"ifname":"vethf76fd7f","flags":["BROADCAST","MULTICAST","UP","LOWER_UP"],"operstate":"UP",
+ {"ifname":"veth0","flags":["BROADCAST","MULTICAST","UP","LOWER_UP"],"operstate":"UP",
   "master":"docker0","linkinfo":{"info_kind":"veth"},"addr_info":[]},
- {"ifname":"eno1","flags":["NO-CARRIER","BROADCAST","MULTICAST","UP"],"operstate":"DOWN","addr_info":[]}
+ {"ifname":"eth0","flags":["NO-CARRIER","BROADCAST","MULTICAST","UP"],"operstate":"DOWN","addr_info":[]}
 ]`
 
 func TestParse(t *testing.T) {
 	fs := fakeSysfs{
-		tuns:  map[string]int{"tailscale0": 0x5001},
-		wifis: map[string]bool{"wlp2s0": true},
-		devs:  map[string]bool{"wlp2s0": true, "eno1": true},
+		tuns:  map[string]int{"tun0": 0x5001},
+		wifis: map[string]bool{"wlan0": true},
+		devs:  map[string]bool{"wlan0": true, "eth0": true},
 	}
 	got, err := parse([]byte(sample), fs)
 	if err != nil {
@@ -45,10 +45,10 @@ func TestParse(t *testing.T) {
 
 	want := []Link{
 		{Name: "docker0", Kind: Bridge, Impl: "bridge", State: "UP", Addrs: []string{"172.17.0.1/16"}},
-		{Name: "eno1", Kind: Ethernet, State: "DOWN"},
-		{Name: "tailscale0", Kind: VPN, Impl: "tun", State: "UNKNOWN", Addrs: []string{"100.64.0.1/32"}},
-		{Name: "vethf76fd7f", Kind: Virtual, Impl: "veth", State: "UP", Master: "docker0"},
-		{Name: "wlp2s0", Kind: Wifi, State: "UP", Addrs: []string{"192.0.2.132/24"}},
+		{Name: "eth0", Kind: Ethernet, State: "DOWN"},
+		{Name: "tun0", Kind: VPN, Impl: "tun", State: "UNKNOWN", Addrs: []string{"100.64.0.1/32"}},
+		{Name: "veth0", Kind: Virtual, Impl: "veth", State: "UP", Master: "docker0"},
+		{Name: "wlan0", Kind: Wifi, State: "UP", Addrs: []string{"192.0.2.132/24"}},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %+v\nwant %v, got, want", got, want)
